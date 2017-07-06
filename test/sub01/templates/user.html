@@ -1,0 +1,30 @@
+<!--Flask-Bootstrap’s base template blocks
+Block name | Description
+doc        | The entire HTML document
+html_      | attribs Attributes inside the <html> tag
+html       | The contents of the <html> tag
+head       | The contents of the <head> tag
+title      | The contents of the <title> tag
+metas      | The list of <meta> tags
+styles     | Cascading stylesheet definitions
+body_      | attribs Attributes inside the <body> tag
+body       | The contents of the <body> tag
+navbar     | User-defined navigation bar
+content    | User-defined page content
+scripts    | JavaScript declarations at the bottom of the document-->
+
+
+{% extends "base.html" %}
+{#{% block title %}F l a s k y{% endblock %}#}
+{% block page_content %}
+<div class="page-header">
+    {% if name == 'anonymous' %}
+    <h1>Your default nickname is {{ name }}!</h1>
+    {% else %}
+    <h1>Hello, {{ name }}!</h1>
+    {% endif %}
+</div>
+<h1 style="color: red"> {{ self.my() }}</h1>
+{% endblock %}
+
+
