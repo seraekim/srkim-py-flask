@@ -1,0 +1,237 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title>mobile devices table</title>
+    <!--<base href="${ctxp}/"/>-->
+    <link rel="stylesheet" href="static/lib/materialize/materialize.min.css">
+    <link rel="stylesheet" href="static/lib/jsgrid-1.5.3/css/jsgrid.css">
+    <link rel="stylesheet" href="static/lib/jsgrid-1.5.3/css/theme.css">
+    <style>
+		html, body, body * {
+			font-size: 11px;
+		}
+		td {
+			word-wrap:break-word;
+		}
+		.jsgrid-header-row .header-cell-placeholder {
+    		background: #E3F1FF;
+		}
+		.jsgrid-grid-header.jsgrid-header-scrollbar {
+			position: fixed;
+			overflow-y: hidden;
+			overflow-x: auto;
+		}
+
+		.jsgrid-grid-body {
+	    	margin-top: 109px;
+			overflow-y: hidden;
+			overflow-x: auto;
+		}
+	
+    </style>
+    <script src="static/lib/jquery/jquery-1.8.3.js"></script>
+</head>
+<body>
+
+<div id="srkGrid"></div>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.core.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.load-indicator.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.load-strategies.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.sort-strategies.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.validation.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/jsgrid.field.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/fields/jsgrid.field.text.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/fields/jsgrid.field.number.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/fields/jsgrid.field.select.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/fields/jsgrid.field.checkbox.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/fields/jsgrid.field.control.js"></script>
+<script src="static/lib/jsgrid-1.5.3/src/i18n/ko.js"></script>
+<script>
+		var ctxp = '';
+		jsGrid.locale("ko");
+		jsGrid.validators.phone_cd = {
+			message: "필수이며, 30자이하여야 합니다.",
+			validator: function(value, item) {
+			    return /^.{1,30}$/.test(value);
+			}
+		};
+
+		function lowerIndexOf(a, b) {
+			if(a && b) {
+				return a.toLowerCase().indexOf(b.toLowerCase()) > -1;
+			} else {
+				console.log(a, b);
+				return true;
+			}
+		}
+
+	    // 여러 사라밍 동시에 생성,삭제,갱신,조회를 할 때 브라우저상에서는 동기화가 안되므로 예상되는 에러를 처리
+		function dealRes (data, item, msg, reload) {
+			console.log(data);
+			var result = 0;
+			if(data == 1) {
+				result = item;
+			} else if(data == 0) {
+				alert(msg);
+				if(reload) location.reload();
+			} else if(data == -1) {
+				alert('db에 문제가 있습니다.')
+			} else {
+				alert('알 수 없는 에러 발생.');
+			}
+			return result;
+		};
+
+		$.ajax({
+			type : "GET",
+			url : ctxp + "/read",
+		}).done(function(res) {
+		    //res = JSON.parse(res);
+			console.log(res[0].phone_cd);
+			console.log(res);
+			var grid = $("#srkGrid").jsGrid({
+                width: "100%",
+                filtering: true,
+                editing: true,
+                inserting: true,
+                sorting: true,
+                paging: true,
+                autoload: true,
+                autosearch: true,
+                pageSize: 10,
+                pageButtonCount: 5,
+                controller: {
+				    loadData: function(filter) {
+				    	return $.grep(res, function(res) {
+			                return (!filter.phone_cd || lowerIndexOf(res.phone_cd, filter.phone_cd))
+			                    && (!filter.phone_nm || lowerIndexOf(res.phone_nm, filter.phone_nm))
+			                    && (!filter.manu_ymd || lowerIndexOf(res.manu_ymd, filter.manu_ymd))
+			                    && (!filter.manu_cd || lowerIndexOf(res.manu_cd, filter.manu_cd))
+			                    && (!filter.carrier_cd || lowerIndexOf(res.carrier_cd, filter.carrier_cd))
+			                    && (!filter.carrier_nation || lowerIndexOf(res.carrier_nation, filter.carrier_nation))
+			                    && (!filter.scr_width || res.scr_width == filter.scr_width)
+			                    && (!filter.scr_height || res.scr_height == filter.scr_height)
+			                    && (!filter.scr_cd || lowerIndexOf(res.scr_cd, filter.scr_cd))
+			                    && (!filter.os_type || lowerIndexOf(res.os_type, filter.os_type))
+			                    && (!filter.os_ver || lowerIndexOf(res.os_ver, filter.os_ver))
+			                    && (!filter.os_nm || lowerIndexOf(res.os_nm, filter.os_nm))
+			                    && (!filter.cpu_core || lowerIndexOf(res.cpu_core, filter.cpu_core))
+			                    && (!filter.cpu_hz || lowerIndexOf(res.cpu_hz, filter.cpu_hz))
+			                    && (!filter.ram_size || res.ram_size == filter.ram_size)
+			                    && (!filter.kor_url || lowerIndexOf(res.kor_url, filter.kor_url))
+			                    && (!filter.eng_url || lowerIndexOf(res.eng_url, filter.eng_url))
+			            });
+				    },
+				    insertItem: function(item) {
+				    	var result = 0;
+						$.ajax({
+							type: 'POST',
+							url: '/create',
+							data: item,
+							async: false
+						}).done(function(res2){
+							result = dealRes(res2,item,'중복되는 제품코드가 있습니다. 데이터를 리로드합니다.',true);
+
+						});
+						return result;
+				    },
+
+				    updateItem: function(item) {
+				    	var result = 0;
+				    	$.ajax({
+							type: 'POST',
+							url: '/update',
+							data: item,
+							async: false
+						}).done(function(res2){
+							result = dealRes(res2,item,'디비와 동기화 문제가 있습니다. 데이터를 리로드합니다.', true);
+						});
+						return result;
+				    },
+
+				    deleteItem: function(item) {
+						$.ajax({
+							type: 'POST',
+							url: '/delete',
+							data: item
+						}).done(function(res2){
+							dealRes(res2,item,'이미 디비에 없는 제품입니다.');
+						});
+				    }
+				},
+                onItemInserting: function(args) {
+                	var d = args.grid.data;
+            		for(var i in d) {
+            			if(d[i].phone_cd == args.item.phone_cd) {
+            				args.cancel = true;
+            				alert('제품코드가 중복됩니다.');
+            				break;
+            			}
+            		}
+                },
+                onItemInserted: function(args) {
+                	if(args.grid._sortField) {
+                    	var sortField = args.grid._sortField.name;
+                    	var sortOrder = args.grid._sortField._grid._sortOrder;
+                    	grid.jsGrid("sort", { field: sortField, order: sortOrder });
+                	} else {
+                    	grid.jsGrid("sort", { field: "phone_cd", order: "asc" });
+                	}
+                },
+                onItemUpdating: function(args) {
+					if(args.previousItem.phone_cd != args.item.phone_cd) {
+	                	var d = args.grid.data;
+	            		for(var i in d) {
+	            			if(d[i].phone_cd == args.item.phone_cd) {
+	            				args.cancel = true;
+	            				alert('제품코드가 중복됩니다.');
+	            				break;
+	            			}
+	            		}
+					}
+                },
+                onItemUpdated: function(args) {
+                	if(args.grid._sortField) {
+                    	var sortField = args.grid._sortField.name;
+                    	var sortOrder = args.grid._sortField._grid._sortOrder;
+                    	grid.jsGrid("sort", { field: sortField, order: sortOrder });
+                	} else {
+                    	grid.jsGrid("sort", { field: "phone_cd", order: "asc" });
+                	}
+                },
+                resizable: true,
+                fields: [
+                    { type: "control" },
+                    { name: "phone_cd", title: "제품코드", type: "text", width: 80, validate: "phone_cd" },
+                    { name: "phone_nm", title: "제품명", type: "text", width: 80, validate: { validator: "maxLength", param: 100 } },
+                    { name: "manu_ymd", title: "출시년월일", type: "text", width: 80, validate: { validator: "maxLength", param: 15 } }, // 날짜 정규식 필요 및 - 처리 및 datetimepicker
+                    { name: "manu_cd", title: "제조사", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "carrier_cd", title: "통신사", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "carrier_nation", title: "서비스국가", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "scr_width", title: "화면크기-가로", type: "number", width: 50, validate: { validator: "max", param: 10000 } },
+                    { name: "scr_height", title: "화면크기-세로", type: "number", width: 50, validate: { validator: "max", param: 10000 } },
+                    { name: "scr_cd", title: "화면크기", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "os_type", title: "os종류", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "os_ver", title: "os버전", type: "text", width: 80, validate: { validator: "maxLength", param: 20 } },
+                    { name: "os_nm", title: "os이름", type: "text", width: 80, validate: { validator: "maxLength", param: 30 } },
+                    { name: "cpu_core", title: "cpu core", type: "text", width: 80, validate: { validator: "maxLength", param: 20 } },
+                    { name: "cpu_hz", title: "cpu hz", type: "text", width: 80, validate: { validator: "maxLength", param: 20 } },
+                    { name: "ram_size", title: "ram", type: "number", width: 50, validate: { validator: "max", param: 10000 } }, // decimal 정규식 필요
+                    { name: "kor_url", title: "힌극어 제품 url", type: "text", validate: { validator: "maxLength", param: 300 } },
+                    { name: "eng_url", title: "영어 제품 url", type: "text", validate: { validator: "maxLength", param: 300 } }
+                ]
+            });
+
+		});
+
+		$(document).ajaxError(function(a,b,c,d) {
+			alert('서버 에러, 서버 및 브라우저 콘솔 로그를 확인하세요.');
+			console.log(a,b,c,d);
+		});
+	
+</script>
+
+</body>
+</html>
