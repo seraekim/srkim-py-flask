@@ -14,6 +14,6 @@ def app(env, res):
 
 httpd = make_server('localhost', 8080, app)
 
-# 요청을 기다리며 요청 응답 직후 서버 종료
+# server shutdown as soon as it gets the first request
 httpd.handle_request()
 
